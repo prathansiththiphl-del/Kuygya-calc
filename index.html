@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sittiphon Calculator</title>
+
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  font-family: Arial;
+}
+
+.box {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  width: 260px;
+  text-align: center;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+}
+
+button {
+  width: 48%;
+  padding: 10px;
+  margin: 5px 1%;
+  border: none;
+  background: #4facfe;
+  color: white;
+}
+
+#result {
+  margin-top: 10px;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Sittiphon Calc</h2>
+
+  <input type="number" id="n1" placeholder="เลขที่ 1">
+  <input type="number" id="n2" placeholder="เลขที่ 2">
+
+  <button onclick="calc('+')">+</button>
+  <button onclick="calc('-')">-</button>
+
+  <div id="result">ผลลัพธ์: -</div>
+</div>
+
+<script>
+function calc(op){
+  let a = parseFloat(document.getElementById("n1").value) || 0;
+  let b = parseFloat(document.getElementById("n2").value) || 0;
+
+  let r = (op === '+') ? a + b : a - b;
+  document.getElementById("result").innerText = "ผลลัพธ์: " + r;
+}
+</script>
+
+</body>
+</html>
