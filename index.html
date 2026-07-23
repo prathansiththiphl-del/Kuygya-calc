@@ -1,14 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title<OWERODs/title>
+  <title>Calculator Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+                  url('bg.jpg');
+      background-size: cover;
+      background-position: center;
+      font-family: sans-serif;
+      text-align: center;
+      color: white;
+    }
+
+    button {
+      width: 60px;
+      height: 40px;
+      margin: 5px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #4facfe;
+      color: white;
+    }
+
+    input {
+      width: 80%;
+      height: 50px;
+      font-size: 20px;
+      text-align: right;
+      border-radius: 10px;
+      border: none;
+      padding: 10px;
+    }
+  </style>
 </head>
-<body style="text-align:center; font-family:sans-serif;">
+
+<body>
 
   <h1>🔥 Calculator Pro</h1>
 
-  <input id="display" type="text" style="width:80%; height:50px; font-size:20px;" readonly><br><br>
+  <input id="display" type="text" readonly><br><br>
 
   <div>
     <button onclick="add('7')">7</button>
