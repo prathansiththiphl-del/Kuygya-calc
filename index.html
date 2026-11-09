@@ -1,104 +1,254 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <title>Calculator Pro</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แบบสำรวจวิชา ม.2/1</title>
 
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
-                  url('bg.jpg');
-      background-size: cover;
-      background-position: center;
-      font-family: sans-serif;
-      text-align: center;
-      color: white;
-    }
+<style>
+* {
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
 
-    button {
-      width: 60px;
-      height: 40px;
-      margin: 5px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      background: #4facfe;
-      color: white;
-    }
+body {
+  margin: 0;
+  background: #f1f5f9;
+  color: #1e293b;
+}
 
-    input {
-      width: 80%;
-      height: 50px;
-      font-size: 20px;
-      text-align: right;
-      border-radius: 10px;
-      border: none;
-      padding: 10px;
-    }
-  </style>
+header {
+  background: linear-gradient(135deg,#2563eb,#7c3aed);
+  color: white;
+  text-align: center;
+  padding: 40px 15px;
+}
+
+header h1 {
+  margin: 0 0 10px;
+  font-size: 27px;
+}
+
+header p {
+  margin: 0;
+  opacity: .9;
+}
+
+.container {
+  max-width: 600px;
+  margin: 25px auto;
+  padding: 15px;
+}
+
+.card {
+  background: white;
+  padding: 25px;
+  border-radius: 18px;
+  box-shadow: 0 5px 20px #0000000d;
+  margin-bottom: 20px;
+}
+
+h2 {
+  font-size: 20px;
+  margin-top: 0;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin: 18px 0 8px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 16px;
+  background: white;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  margin-top: 20px;
+  border: none;
+  border-radius: 12px;
+  background: #2563eb;
+  color: white;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+.result {
+  margin: 15px 0;
+}
+
+.bar {
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 7px;
+}
+
+.fill {
+  height: 100%;
+  background: linear-gradient(90deg,#2563eb,#8b5cf6);
+  border-radius: 20px;
+  width: 0%;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  color: #64748b;
+  font-size: 13px;
+}
+</style>
 </head>
 
 <body>
 
-  <h1>🔥 Calculator Pro</h1>
+<header>
+  <h1>📚 Student Survey</h1>
+  <p>แบบสำรวจวิชาที่ชอบและไม่ชอบ</p>
+  <p>นักเรียนชั้นมัธยมศึกษาปีที่ 2/1</p>
+</header>
 
-  <input id="display" type="text" readonly><br><br>
+<div class="container">
 
-  <div>
-    <button onclick="add('7')">7</button>
-    <button onclick="add('8')">8</button>
-    <button onclick="add('9')">9</button>
-    <button onclick="add('/')">÷</button><br>
+  <div class="card">
+    <h2>📝 แบบสอบถามความคิดเห็น</h2>
+    <form id="survey">
 
-    <button onclick="add('4')">4</button>
-    <button onclick="add('5')">5</button>
-    <button onclick="add('6')">6</button>
-    <button onclick="add('*')">×</button><br>
+      <label>1. ชื่อเล่น</label>
+      <input id="name" placeholder="กรอกชื่อเล่น" required>
 
-    <button onclick="add('1')">1</button>
-    <button onclick="add('2')">2</button>
-    <button onclick="add('3')">3</button>
-    <button onclick="add('-')">−</button><br>
+      <label>2. วิชาที่ชอบมากที่สุด</label>
+      <select id="like" required>
+        <option value="">-- เลือกวิชา --</option>
+      </select>
 
-    <button onclick="add('0')">0</button>
-    <button onclick="add('.')">.</button>
-    <button onclick="calculate()">=</button>
-    <button onclick="add('+')">+</button><br>
+      <label>3. วิชาที่ไม่ชอบมากที่สุด</label>
+      <select id="dislike" required>
+        <option value="">-- เลือกวิชา --</option>
+      </select>
 
-    <button onclick="power()">x²</button>
-    <button onclick="sqrt()">√</button>
-    <button onclick="clearDisplay()">C</button>
+      <label>4. เพราะอะไรถึงชอบหรือไม่ชอบ?</label>
+      <textarea id="reason" placeholder="แสดงความคิดเห็นของคุณ..."></textarea>
+
+      <button type="submit">ส่งแบบสำรวจ 🚀</button>
+    </form>
+    <p id="message"></p>
   </div>
 
+  <div class="card">
+    <h2>📊 ผลสำรวจวิชาที่นักเรียนชอบ</h2>
+    <p>จำนวนผู้ตอบ: <b id="total">0</b> คน</p>
+    <div id="results"></div>
+  </div>
+
+</div>
+
+<footer>
+  แบบสำรวจความคิดเห็นนักเรียน ม.2/1
+  <br>Student Survey Project
+</footer>
+
 <script>
-function add(val){
-  document.getElementById("display").value += val;
+const subjects = [
+  "คณิตศาสตร์",
+  "วิทยาศาสตร์",
+  "ภาษาไทย",
+  "ภาษาอังกฤษ",
+  "สังคมศึกษา",
+  "ประวัติศาสตร์",
+  "พลศึกษา",
+  "ศิลปะ",
+  "คอมพิวเตอร์",
+  "การงานอาชีพ"
+];
+
+const like = document.getElementById("like");
+const dislike = document.getElementById("dislike");
+
+subjects.forEach(subject => {
+  like.add(new Option(subject, subject));
+  dislike.add(new Option(subject, subject));
+});
+
+let surveys = JSON.parse(
+  localStorage.getItem("m21_surveys") || "[]"
+);
+
+document.getElementById("survey").addEventListener("submit", e => {
+  e.preventDefault();
+
+  const data = {
+    name: document.getElementById("name").value.trim(),
+    like: like.value,
+    dislike: dislike.value,
+    reason: document.getElementById("reason").value
+  };
+
+  if (!data.name || !data.like || !data.dislike) return;
+
+  surveys.push(data);
+
+  localStorage.setItem(
+    "m21_surveys",
+    JSON.stringify(surveys)
+  );
+
+  document.getElementById("message").textContent =
+    "✅ ส่งแบบสำรวจเรียบร้อยแล้ว!";
+
+  e.target.reset();
+  showResults();
+});
+
+function showResults() {
+  const total = surveys.length;
+
+  document.getElementById("total").textContent = total;
+
+  const results = document.getElementById("results");
+  results.innerHTML = "";
+
+  subjects.forEach(subject => {
+    const count = surveys.filter(
+      s => s.like === subject
+    ).length;
+
+    const percent = total
+      ? (count / total * 100).toFixed(1)
+      : 0;
+
+    results.innerHTML += `
+      <div class="result">
+        <b>${subject}</b>
+        <span style="float:right">${count} คน (${percent}%)</span>
+        <div class="bar">
+          <div class="fill" style="width:${percent}%"></div>
+        </div>
+      </div>
+    `;
+  });
 }
 
-function calculate(){
-  try{
-    let result = eval(document.getElementById("display").value);
-    document.getElementById("display").value = result;
-  }catch{
-    alert("Error");
-  }
-}
-
-function clearDisplay(){
-  document.getElementById("display").value = "";
-}
-
-function power(){
-  let val = document.getElementById("display").value;
-  document.getElementById("display").value = val * val;
-}
-
-function sqrt(){
-  let val = document.getElementById("display").value;
-  document.getElementById("display").value = Math.sqrt(val);
-}
+showResults();
 </script>
 
 </body>
