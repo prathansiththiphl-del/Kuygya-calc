@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: white; padding: 20px; }
+    .container { max-width: 1000px; margin: auto; }
+    .card { background: #1e293b; padding: 22px; border-radius: 16px; margin-bottom: 18px; }
+    h1 { font-size: 25px; }
+    input { width: 100%; padding: 14px; border: 0; border-radius: 9px; margin: 12px 0; background: #334155; color: white; font-size: 16px; }
+    button { padding: 12px 20px; background: #3b82f6; color: white; border: 0; border-radius: 9px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #2563eb; }
+    .error { color: #f87171; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+    .stat { background: #334155; padding: 20px; border-radius: 12px; }
+    .stat strong { font-size: 30px; display: block; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    th, td { padding: 12px; border-bottom: 1px solid #475569; text-align: left; }
+    th { color: #93c5fd; }
+    .table-wrap { overflow-x: auto; }
+    .bar { height: 9px; background: #334155; border-radius: 10px; margin: 8px 0 15px; }
+    .fill { height: 100%; background: #3b82f6; border-radius: 10px; }
+    .hidden { display: none; }
+    .muted { color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="login" class="card">
+      <h1>🔐 Admin Login</h1>
+      <p class="muted">เข้าสู่ระบบจัดการแบบสำรวจนักเรียน</p>
+      <input id="password" type="password" placeholder="กรอกรหัสแอดมิน">
+      <button onclick="login()">เข้าสู่ระบบ</button>
+      <p id="error" class="error"></p>
+    </div>
+
+    <div id="dashboard" class="hidden">
+      <h1>📊 Admin Dashboard</h1>
+      <p class="muted">ระบบจัดการแบบสำรวจความคิดเห็นนักเรียน</p>
+
+      <div class="stats">
+        <div class="stat">ผู้ตอบทั้งหมด<strong id="total">0</strong>คน</div>
+        <div class="stat">วิชาที่ได้รับความชอบสูงสุด<strong id="top">-</strong></div>
+      </div>
+
+      <div class="card">
+        <h2>❤️ วิชาที่ชอบ</h2>
+        <div id="favorite"></div>
+      </div>
+
+      <div class="card">
+        <h2>👎 วิชาที่ไม่ชอบ</h2>
+        <div id="least"></div>
+      </div>
+
+      <div class="card">
+        <h2>👨‍🎓 รายชื่อนักเรียน</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ชื่อ</th>
+                <th>ชั้น</th>
+                <th>เลขที่</th>
+                <th>วิชาที่ชอบ</th>
+                <th>วิชาที่ไม่ชอบ</th>
+              </tr>
+            </thead>
+            <tbody id="students"></tbody>
+          </table>
+        </div>
+      </div>
+      <button onclick="location.reload()">ออกจากระบบ</button>
+    </div>
+  </div>
+
+  <script>
+    let adminPassword = "";
+
+    function login() {
+      const password = document.getElementById("password").value;
+      const error = document.getElementById("error");
+
+      if (!password) {
+        error.textContent = "กรุณากรอกรหัสผ่าน";
+        return;
+      }
+
+      error.textContent = "กำลังตรวจสอบ...";
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result) {
+            adminPassword = password;
+            loadDashboard();
+          } else {
+            error.textContent = "รหัสผ่านไม่ถูกต้อง";
+          }
+        })
+        .withFailureHandler(function() {
+          error.textContent = "เกิดข้อผิดพลาด กรุณาลองใหม่";
+        })
+        .adminLogin(password);
+    }
+
+    function loadDashboard() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          document.getElementById("login").classList.add("hidden");
+          document.getElementById("dashboard").classList.remove("hidden");
+          document.getElementById("total").textContent = data.total;
+
+          let topSubject = "-";
+          let max = 0;
+
+          Object.entries(data.favorite).forEach(([name, count]) => {
+            if (count > max) {
+              max = count;
+              topSubject = name;
+            }
+          });
+
+          document.getElementById("top").textContent = topSubject;
+          renderStats("favorite", data.favorite, data.total);
+          renderStats("least", data.leastFavorite, data.total);
+          renderStudents(data.students || []);
+        })
+        .withFailureHandler(function(error) {
+          document.getElementById("error").textContent =
+            error.message || "โหลดข้อมูลไม่สำเร็จ";
+        })
+        .getDashboard(adminPassword);
+    }
+
+    function renderStats(id, data, total) {
+      const area = document.getElementById(id);
+      area.replaceChildren();
+
+      Object.entries(data).sort((a, b) => b[1] - a[1]).forEach(([name, count]) => {
+        const percent = total ? (count / total * 100).toFixed(1) : 0;
+        const label = document.createElement("div");
+        label.textContent = name + " — " + count + " คน (" + percent + "%)";
+
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        const fill = document.createElement("div");
+        fill.className = "fill";
+        fill.style.width = percent + "%";
+        bar.appendChild(fill);
+        area.appendChild(label);
+        area.appendChild(bar);
+      });
+    }
+
+    function renderStudents(students) {
+      const body = document.getElementById("students");
+      body.replaceChildren();
+
+      students.forEach(student => {
+        const tr = document.createElement("tr");
+        student.forEach(value => {
+          const td = document.createElement("td");
+          td.textContent = value;
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>
