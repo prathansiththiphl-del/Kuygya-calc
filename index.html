@@ -1,218 +1,300 @@
-const SHEET_NAME = "Survey";
 
-const HEADERS = [
-  "วันที่",
-  "ชื่อจริง",
-  "ชั้น",
-  "เลขที่",
-  "วิชาที่ชอบ",
-  "วิชาที่ไม่ชอบ",
-  "เหตุผล"
-];
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ระบบสำรวจนักเรียน</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f5fb;color:#202b45}
+header{background:#263d80;color:white;padding:25px;text-align:center}
+main{max-width:750px;margin:25px auto;padding:15px}
+.card{background:white;padding:22px;border-radius:16px;margin-bottom:20px;box-shadow:0 3px 15px #0001}
+h2{margin-top:0}
+label{display:block;margin:14px 0 6px;font-weight:bold}
+input,textarea{width:100%;padding:12px;border:1px solid #ccd4e4;border-radius:9px;font-size:16px}
+textarea{min-height:100px}
+button{padding:12px 18px;border:0;border-radius:9px;background:#263d80;color:white;font-weight:bold;cursor:pointer;margin-top:15px}
+button:disabled{opacity:.5}
+.tabs{display:flex;gap:10px;margin-bottom:15px}
+.tabs button{flex:1}
+.hidden{display:none}
+.notice{padding:12px;margin-top:12px;border-radius:8px}
+.error{background:#ffe9e9;color:#a22}
+.success{background:#e4f8eb;color:#176b42}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}
+.table-wrap{overflow-x:auto}
+.stat{font-size:25px;font-weight:bold;color:#263d80}
+.bar{height:12px;background:#e8ebf3;border-radius:10px;margin:7px 0 15px}
+.fill{height:100%;background:#4264b5;border-radius:10px}
+</style>
+</head>
+<body>
 
-function doGet(e) {
-  return ContentService
-    .createTextOutput(JSON.stringify({
-      success: true,
-      message: "Survey API is running"
-    }))
-    .setMimeType(ContentService.MimeType.JSON);
+<header>
+<h1>ระบบสำรวจความคิดเห็นนักเรียน</h1>
+<p>STUDENT SURVEY SYSTEM</p>
+</header>
+
+<main>
+<div class="tabs">
+<button onclick="showPage('student')">แบบสำรวจนักเรียน</button>
+<button onclick="showPage('admin')">โหมดแอดมิน</button>
+</div>
+
+<!-- หน้านักเรียน -->
+<section id="student" class="card">
+<h2>แบบสำรวจความคิดเห็น</h2>
+<form id="surveyForm">
+
+<label>ชื่อจริง *</label>
+<input id="name" maxlength="100" required>
+
+<label>ชั้น *</label>
+<input id="classroom" placeholder="เช่น ม.5/1" required>
+
+<label>เลขที่ *</label>
+<input id="number" required>
+
+<label>วิชาที่ชอบ *</label>
+<input id="favorite" required>
+
+<label>วิชาที่ไม่ชอบ *</label>
+<input id="unfavorite" required>
+
+<label>เหตุผล (บังคับกรอก) *</label>
+<textarea id="reason" maxlength="500" required placeholder="กรุณากรอกเหตุผล"></textarea>
+<small id="count">0/500 ตัวอักษร</small>
+
+<br>
+<button id="submitBtn" type="submit">ส่งแบบสำรวจ</button>
+</form>
+<div id="studentMessage"></div>
+</section>
+
+<!-- หน้าแอดมิน -->
+<section id="admin" class="card hidden">
+<div id="login">
+<h2>เข้าสู่ระบบแอดมิน</h2>
+<label>รหัสผ่าน</label>
+<input type="password" id="password">
+<button onclick="adminLogin()">เข้าสู่ระบบ</button>
+<div id="loginMessage"></div>
+</div>
+
+<div id="dashboard" class="hidden">
+<h2>Dashboard แอดมิน</h2>
+<p>จำนวนผู้ตอบทั้งหมด</p>
+<div class="stat" id="total">0 คน</div>
+
+<h3>วิชาที่ชอบ</h3>
+<div id="favoriteStats"></div>
+
+<h3>วิชาที่ไม่ชอบ</h3>
+<div id="unfavoriteStats"></div>
+
+<h3>รายชื่อนักเรียนและคำตอบ</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>วันที่</th>
+<th>ชื่อ</th>
+<th>ชั้น</th>
+<th>เลขที่</th>
+<th>ชอบ</th>
+<th>ไม่ชอบ</th>
+<th>เหตุผล</th>
+</tr>
+</thead>
+<tbody id="records"></tbody>
+</table>
+</div>
+
+<button onclick="loadStats()">รีเฟรชข้อมูล</button>
+<button onclick="logout()">ออกจากระบบ</button>
+</div>
+</section>
+</main>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbyAFauHeznqEulb0xlsWHOsmbPA8NGSPpuGOQenoZNyP5jyQiD--CNXh5gIynioL2AX/exec";
+
+let token = "";
+
+function showPage(page){
+document.getElementById("student").classList.toggle("hidden",page!=="student");
+document.getElementById("admin").classList.toggle("hidden",page!=="admin");
 }
 
-function doPost(e) {
-  try {
-    const data = e.parameter || {};
-    const action = data.action || "";
+document.getElementById("reason").addEventListener("input",function(){
+document.getElementById("count").textContent=this.value.length+"/500 ตัวอักษร";
+});
 
-    if (action === "submit") {
-      return submitSurvey(data);
-    }
+async function sendData(data){
+const form = new URLSearchParams();
+Object.keys(data).forEach(key=>form.append(key,data[key]));
 
-    if (action === "adminLogin") {
-      return adminLogin(data);
-    }
+const response = await fetch(API_URL,{
+method:"POST",
+headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},
+body:form.toString()
+});
 
-    if (action === "adminStats") {
-      return adminStats(data);
-    }
-
-    return response({
-      success: false,
-      message: "ไม่พบคำสั่ง"
-    });
-
-  } catch (error) {
-    return response({
-      success: false,
-      message: error.message
-    });
-  }
+return await response.json();
 }
 
-// เตรียมฐานข้อมูล
-function setupSurvey() {
-  const props = PropertiesService.getScriptProperties();
-  let id = props.getProperty("SURVEY_ID");
-  let ss;
+// ส่งแบบสำรวจ
+document.getElementById("surveyForm").addEventListener("submit",async function(e){
+e.preventDefault();
 
-  if (id) {
-    ss = SpreadsheetApp.openById(id);
-  } else {
-    ss = SpreadsheetApp.create("Kuygya Survey Database");
-    props.setProperty("SURVEY_ID", ss.getId());
-  }
+const reason=document.getElementById("reason").value.trim();
 
-  let sheet = ss.getSheetByName(SHEET_NAME);
-
-  if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAME);
-  }
-
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(HEADERS);
-  }
-
-  Logger.log("Database URL: " + ss.getUrl());
-  return ss.getUrl();
+if(!reason){
+showMessage("studentMessage","กรุณากรอกเหตุผลก่อนส่ง","error");
+return;
 }
 
-// เชื่อมต่อชีต
-function getSurveySheet() {
-  const id = PropertiesService
-    .getScriptProperties()
-    .getProperty("SURVEY_ID");
+const data={
+action:"submit",
+name:document.getElementById("name").value.trim(),
+classroom:document.getElementById("classroom").value.trim(),
+number:document.getElementById("number").value.trim(),
+favorite:document.getElementById("favorite").value.trim(),
+unfavorite:document.getElementById("unfavorite").value.trim(),
+reason:reason
+};
 
-  if (!id) throw new Error("กรุณารัน setupSurvey ก่อน");
-
-  const ss = SpreadsheetApp.openById(id);
-  const sheet = ss.getSheetByName(SHEET_NAME);
-
-  if (!sheet) throw new Error("ไม่พบชีต Survey");
-
-  return sheet;
+if(Object.values(data).slice(1).some(v=>!v)){
+showMessage("studentMessage","กรุณากรอกข้อมูลให้ครบ","error");
+return;
 }
 
-// บันทึกข้อมูลนักเรียน
-function submitSurvey(data) {
-  const name = String(data.name || "").trim();
-  const classroom = String(data.classroom || "").trim();
-  const number = String(data.number || "").trim();
-  const favorite = String(data.favorite || "").trim();
-  const unfavorite = String(data.unfavorite || "").trim();
-  const reason = String(data.reason || "").trim();
+const btn=document.getElementById("submitBtn");
+btn.disabled=true;
+btn.textContent="กำลังส่ง...";
 
-  if (!name || !classroom || !number ||
-      !favorite || !unfavorite || !reason) {
-    return response({
-      success: false,
-      message: "กรุณากรอกข้อมูลให้ครบ"
-    });
-  }
+try{
+const result=await sendData(data);
 
-  if (name.length > 100 || reason.length > 500) {
-    return response({
-      success: false,
-      message: "ข้อมูลยาวเกินกำหนด"
-    });
-  }
+if(!result.success)throw new Error(result.message);
 
-  const sheet = getSurveySheet();
+showMessage("studentMessage","บันทึกข้อมูลสำเร็จ","success");
+this.reset();
+document.getElementById("count").textContent="0/500 ตัวอักษร";
 
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
+}catch(error){
+showMessage("studentMessage","ส่งข้อมูลไม่สำเร็จ: "+error.message,"error");
+}finally{
+btn.disabled=false;
+btn.textContent="ส่งแบบสำรวจ";
+}
+});
 
-  try {
-    sheet.appendRow([
-      new Date(),
-      name,
-      classroom,
-      number,
-      favorite,
-      unfavorite,
-      reason
-    ]);
-  } finally {
-    lock.releaseLock();
-  }
+// เข้าสู่ระบบแอดมิน
+async function adminLogin(){
+const password=document.getElementById("password").value;
+const msg=document.getElementById("loginMessage");
 
-  return response({
-    success: true,
-    message: "บันทึกข้อมูลสำเร็จ"
-  });
+try{
+const result=await sendData({
+action:"adminLogin",
+password:password
+});
+
+if(!result.success)throw new Error(result.message);
+
+token=result.token;
+
+document.getElementById("login").classList.add("hidden");
+document.getElementById("dashboard").classList.remove("hidden");
+
+await loadStats();
+
+}catch(error){
+showMessage("loginMessage",error.message,"error");
+}
 }
 
-// ตรวจสอบรหัสแอดมิน
-function adminLogin(data) {
-  const savedPassword = PropertiesService
-    .getScriptProperties()
-    .getProperty("ADMIN_PASSWORD");
+// โหลดสถิติ
+async function loadStats(){
+try{
+const result=await sendData({
+action:"adminStats",
+token:token
+});
 
-  if (!savedPassword) {
-    return response({
-      success: false,
-      message: "ยังไม่ได้ตั้งรหัสแอดมิน"
-    });
-  }
+if(!result.success)throw new Error(result.message);
 
-  if (String(data.password || "") !== savedPassword) {
-    return response({
-      success: false,
-      message: "รหัสผ่านไม่ถูกต้อง"
-    });
-  }
+const records=result.records||[];
+document.getElementById("total").textContent=records.length+" คน";
 
-  const token = Utilities.getUuid();
+renderStats("favoriteStats",records,"favorite");
+renderStats("unfavoriteStats",records,"unfavorite");
 
-  CacheService.getScriptCache().put(
-    "ADMIN_" + token,
-    "authorized",
-    1800
-  );
+const tbody=document.getElementById("records");
+tbody.innerHTML="";
 
-  return response({
-    success: true,
-    token: token
-  });
+records.slice().reverse().forEach(r=>{
+const tr=document.createElement("tr");
+[r.date,r.name,r.classroom,r.number,r.favorite,r.unfavorite,r.reason].forEach(value=>{
+const td=document.createElement("td");
+td.textContent=value??"";
+tr.appendChild(td);
+});
+tbody.appendChild(tr);
+});
+
+}catch(error){
+alert(error.message);
+}
 }
 
-// ดูสถิติสำหรับแอดมิน
-function adminStats(data) {
-  const token = String(data.token || "");
+function renderStats(id,records,key){
+const counts={};
 
-  const authorized = CacheService
-    .getScriptCache()
-    .get("ADMIN_" + token);
+records.forEach(r=>{
+const value=r[key]||"ไม่ระบุ";
+counts[value]=(counts[value]||0)+1;
+});
 
-  if (authorized !== "authorized") {
-    return response({
-      success: false,
-      message: "ไม่มีสิทธิ์เข้าถึง"
-    });
-  }
+const box=document.getElementById(id);
+box.innerHTML="";
 
-  const sheet = getSurveySheet();
-  const values = sheet.getDataRange().getValues();
+Object.entries(counts)
+.sort((a,b)=>b[1]-a[1])
+.forEach(([name,count])=>{
+const percent=records.length?count/records.length*100:0;
 
-  const records = values.slice(1).map(row => ({
-    date: row[0],
-    name: row[1],
-    classroom: row[2],
-    number: row[3],
-    favorite: row[4],
-    unfavorite: row[5],
-    reason: row[6]
-  }));
+const title=document.createElement("div");
+title.textContent=name+" : "+count+" คน ("+Math.round(percent)+"%)";
 
-  return response({
-    success: true,
-    total: records.length,
-    records: records
-  });
+const bar=document.createElement("div");
+bar.className="bar";
+
+const fill=document.createElement("div");
+fill.className="fill";
+fill.style.width=percent+"%";
+
+bar.appendChild(fill);
+box.append(title,bar);
+});
 }
 
-// ส่งผลลัพธ์
-function response(data) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
+function logout(){
+token="";
+document.getElementById("login").classList.remove("hidden");
+document.getElementById("dashboard").classList.add("hidden");
+document.getElementById("password").value="";
 }
+
+function showMessage(id,message,type){
+const box=document.getElementById(id);
+box.className="notice "+type;
+box.textContent=message;
+}
+</script>
+</body>
+</html>
