@@ -1,151 +1,295 @@
-const SHEET_NAME = "Survey";
-const ADMIN_PASSWORD = "ChangeThisPassword123";
 
-function getSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SHEET_NAME);
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>แบบสำรวจความคิดเห็น ม.2/1</title>
 
-  if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAME);
-    sheet.appendRow([
-      "วันที่",
-      "ชื่อ-นามสกุล",
-      "ชั้น",
-      "เลขที่",
-      "วิชาที่ชอบ",
-      "วิชาที่ไม่ชอบ",
-      "เหตุผล"
-    ]);
-  }
-
-  return sheet;
-}
-
-// รับข้อมูลจากหน้า GitHub
-function doPost(e) {
-  try {
-    const p = e.parameter;
-
-    const name = String(p.name || "").trim();
-    const studentClass = String(p.studentClass || "");
-    const number = Number(p.number);
-    const like = String(p.like || "");
-    const dislike = String(p.dislike || "");
-    const reason = String(p.reason || "").trim();
-
-    const subjects = [
-      "คณิตศาสตร์", "วิทยาศาสตร์", "ภาษาไทย",
-      "ภาษาอังกฤษ", "สังคมศึกษา", "ประวัติศาสตร์",
-      "พลศึกษา", "ศิลปะ", "คอมพิวเตอร์",
-      "การงานอาชีพ"
-    ];
-
-    if (
-      !name || name.length > 100 ||
-      studentClass !== "ม.2/1" ||
-      !Number.isInteger(number) || number < 1 || number > 60 ||
-      !subjects.includes(like) ||
-      !subjects.includes(dislike) ||
-      reason.length > 1000
-    ) {
-      throw new Error("ข้อมูลไม่ถูกต้อง");
+  <style>
+    * {
+      box-sizing: border-box;
     }
 
-    const sheet = getSheet();
-    const lock = LockService.getScriptLock();
-    lock.waitLock(10000);
+    body {
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: #f8fafc;
+      background: linear-gradient(135deg, #0f172a, #172554);
+    }
 
-    try {
-      const lastRow = sheet.getLastRow();
+    .container {
+      max-width: 600px;
+      margin: 35px auto;
+    }
 
-      if (lastRow >= 2) {
-        const existing = sheet.getRange(2, 3, lastRow - 1, 2)
-          .getValues();
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 25px;
+      box-shadow: 0 15px 40px rgba(0,0,0,.3);
+    }
 
-        const duplicate = existing.some(row =>
-          row[0] === studentClass && Number(row[1]) === number
-        );
+    h1 {
+      color: #38bdf8;
+      text-align: center;
+      font-size: 26px;
+    }
 
-        if (duplicate) {
-          return json({ success: false, message: "เลขที่นี้ส่งแบบสำรวจแล้ว" });
-        }
+    .subtitle {
+      color: #cbd5e1;
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin: 18px 0 8px;
+      font-weight: bold;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #475569;
+      border-radius: 9px;
+      background: #0f172a;
+      color: white;
+      font-size: 16px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid #38bdf8;
+    }
+
+    input[readonly] {
+      color: #94a3b8;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 25px;
+      border: none;
+      border-radius: 10px;
+      background: #2563eb;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    button:disabled {
+      opacity: .6;
+    }
+
+    .admin {
+      display: block;
+      margin-top: 22px;
+      text-align: center;
+      color: #7dd3fc;
+      text-decoration: none;
+    }
+
+    #message {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 18px;
+    }
+
+    .success { color: #4ade80; }
+    .error { color: #f87171; }
+
+    .note {
+      color: #94a3b8;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="card">
+
+      <h1>📚 แบบสำรวจความคิดเห็น</h1>
+
+      <p class="subtitle">
+        วิชาที่ชอบและไม่ชอบของนักเรียน<br>
+        ชั้นมัธยมศึกษาปีที่ 2/1
+      </p>
+
+      <form id="surveyForm" method="POST" target="submitFrame">
+
+        <label>ชื่อ - นามสกุล</label>
+        <input
+          type="text"
+          name="name"
+          placeholder="กรอกชื่อและนามสกุล"
+          required
+        >
+
+        <label>ชั้นเรียน</label>
+        <input
+          type="text"
+          name="studentClass"
+          value="ม.2/1"
+          readonly
+        >
+
+        <label>เลขที่</label>
+        <input
+          type="number"
+          name="number"
+          min="1"
+          max="60"
+          placeholder="กรอกเลขที่"
+          required
+        >
+
+        <label>วิชาที่ชอบ</label>
+        <select name="favorite" required>
+          <option value="">-- เลือกวิชา --</option>
+          <option>คณิตศาสตร์</option>
+          <option>วิทยาศาสตร์</option>
+          <option>ภาษาไทย</option>
+          <option>ภาษาอังกฤษ</option>
+          <option>สังคมศึกษา</option>
+          <option>ประวัติศาสตร์</option>
+          <option>สุขศึกษา</option>
+          <option>พลศึกษา</option>
+          <option>ศิลปะ</option>
+          <option>การงานอาชีพ</option>
+          <option>คอมพิวเตอร์</option>
+        </select>
+
+        <label>วิชาที่ไม่ชอบ</label>
+        <select name="leastFavorite" required>
+          <option value="">-- เลือกวิชา --</option>
+          <option>คณิตศาสตร์</option>
+          <option>วิทยาศาสตร์</option>
+          <option>ภาษาไทย</option>
+          <option>ภาษาอังกฤษ</option>
+          <option>สังคมศึกษา</option>
+          <option>ประวัติศาสตร์</option>
+          <option>สุขศึกษา</option>
+          <option>พลศึกษา</option>
+          <option>ศิลปะ</option>
+          <option>การงานอาชีพ</option>
+          <option>คอมพิวเตอร์</option>
+        </select>
+
+        <label>เหตุผลเพิ่มเติม (ไม่บังคับ)</label>
+        <textarea
+          name="reason"
+          placeholder="ทำไมถึงชอบหรือไม่ชอบวิชานี้?"
+        ></textarea>
+
+        <button id="submitButton" type="submit">
+          ส่งแบบสำรวจ
+        </button>
+
+      </form>
+
+      <p id="message"></p>
+
+      <p class="note">
+        ข้อมูลนี้ใช้สำหรับการสำรวจความคิดเห็นในชั้นเรียนเท่านั้น
+      </p>
+
+      <a class="admin" id="adminLink" href="#">
+        🔐 เข้าสู่ระบบผู้ดูแล
+      </a>
+
+    </div>
+  </div>
+
+  <iframe
+    name="submitFrame"
+    id="submitFrame"
+    style="display:none">
+  </iframe>
+
+  <script>
+    // ใส่ URL Google Apps Script หลังจาก Deploy
+    const API_URL = "ใส่_URL_GOOGLE_APPS_SCRIPT";
+
+    const form = document.getElementById("surveyForm");
+    const button = document.getElementById("submitButton");
+    const message = document.getElementById("message");
+
+    form.action = API_URL;
+
+    document.getElementById("adminLink").href =
+      API_URL + "?page=admin";
+
+    let waiting = false;
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      if (waiting || !form.reportValidity()) return;
+
+      if (form.elements.favorite.value ===
+          form.elements.leastFavorite.value) {
+        message.textContent =
+          "กรุณาเลือกวิชาที่ชอบและไม่ชอบให้ต่างกัน";
+        message.className = "error";
+        return;
       }
 
-      sheet.appendRow([
-        new Date(),
-        name,
-        studentClass,
-        number,
-        like,
-        dislike,
-        reason
-      ]);
+      if (!API_URL.startsWith("https://script.google.com/")) {
+        message.textContent =
+          "กรุณาตั้งค่า URL Google Apps Script ก่อน";
+        message.className = "error";
+        return;
+      }
 
-    } finally {
-      lock.releaseLock();
-    }
+      waiting = true;
+      button.disabled = true;
+      button.textContent = "กำลังส่งข้อมูล...";
+      message.textContent = "";
 
-    return json({ success: true });
+      form.submit();
+    });
 
-  } catch (error) {
-    return json({ success: false, message: error.message });
-  }
-}
+    window.addEventListener("message", function(event) {
+      if (
+        event.source !==
+        document.getElementById("submitFrame").contentWindow
+      ) return;
 
-function json(data) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+      if (!event.data ||
+          event.data.type !== "survey-result") return;
 
-// แสดงหน้า Admin
-function doGet() {
-  return HtmlService.createHtmlOutputFromFile("Admin")
-    .setTitle("Admin Dashboard - M.2/1");
-}
+      waiting = false;
+      button.disabled = false;
+      button.textContent = "ส่งแบบสำรวจ";
 
-// ตรวจรหัสผ่านและส่งเฉพาะข้อมูลสรุป
-function getDashboard(password) {
-  if (password !== ADMIN_PASSWORD) {
-    throw new Error("รหัสผ่านไม่ถูกต้อง");
-  }
+      message.textContent = event.data.message;
+      message.className =
+        event.data.ok ? "success" : "error";
 
-  const sheet = getSheet();
-  const rows = sheet.getLastRow() < 2
-    ? []
-    : sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
+      if (event.data.ok) {
+        form.reset();
+      }
+    });
+  </script>
 
-  const subjects = [
-    "คณิตศาสตร์", "วิทยาศาสตร์", "ภาษาไทย",
-    "ภาษาอังกฤษ", "สังคมศึกษา", "ประวัติศาสตร์",
-    "พลศึกษา", "ศิลปะ", "คอมพิวเตอร์",
-    "การงานอาชีพ"
-  ];
-
-  const likes = {};
-  const dislikes = {};
-
-  subjects.forEach(s => {
-    likes[s] = 0;
-    dislikes[s] = 0;
-  });
-
-  rows.forEach(row => {
-    if (likes[row[4]] !== undefined) likes[row[4]]++;
-    if (dislikes[row[5]] !== undefined) dislikes[row[5]]++;
-  });
-
-  const total = rows.length;
-
-  return {
-    total,
-    subjects: subjects.map(s => ({
-      name: s,
-      like: likes[s],
-      dislike: dislikes[s],
-      likePercent: total ? +(likes[s] / total * 100).toFixed(1) : 0,
-      dislikePercent: total ? +(dislikes[s] / total * 100).toFixed(1) : 0
-    }))
-  };
-}
-    
+</body>
+</html>
