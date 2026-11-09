@@ -1,255 +1,151 @@
+const SHEET_NAME = "Survey";
+const ADMIN_PASSWORD = "ChangeThisPassword123";
 
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>แบบสำรวจวิชา ม.2/1</title>
+function getSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
 
-<style>
-* {
-  box-sizing: border-box;
-  font-family: sans-serif;
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    sheet.appendRow([
+      "วันที่",
+      "ชื่อ-นามสกุล",
+      "ชั้น",
+      "เลขที่",
+      "วิชาที่ชอบ",
+      "วิชาที่ไม่ชอบ",
+      "เหตุผล"
+    ]);
+  }
+
+  return sheet;
 }
 
-body {
-  margin: 0;
-  background: #f1f5f9;
-  color: #1e293b;
+// รับข้อมูลจากหน้า GitHub
+function doPost(e) {
+  try {
+    const p = e.parameter;
+
+    const name = String(p.name || "").trim();
+    const studentClass = String(p.studentClass || "");
+    const number = Number(p.number);
+    const like = String(p.like || "");
+    const dislike = String(p.dislike || "");
+    const reason = String(p.reason || "").trim();
+
+    const subjects = [
+      "คณิตศาสตร์", "วิทยาศาสตร์", "ภาษาไทย",
+      "ภาษาอังกฤษ", "สังคมศึกษา", "ประวัติศาสตร์",
+      "พลศึกษา", "ศิลปะ", "คอมพิวเตอร์",
+      "การงานอาชีพ"
+    ];
+
+    if (
+      !name || name.length > 100 ||
+      studentClass !== "ม.2/1" ||
+      !Number.isInteger(number) || number < 1 || number > 60 ||
+      !subjects.includes(like) ||
+      !subjects.includes(dislike) ||
+      reason.length > 1000
+    ) {
+      throw new Error("ข้อมูลไม่ถูกต้อง");
+    }
+
+    const sheet = getSheet();
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+
+    try {
+      const lastRow = sheet.getLastRow();
+
+      if (lastRow >= 2) {
+        const existing = sheet.getRange(2, 3, lastRow - 1, 2)
+          .getValues();
+
+        const duplicate = existing.some(row =>
+          row[0] === studentClass && Number(row[1]) === number
+        );
+
+        if (duplicate) {
+          return json({ success: false, message: "เลขที่นี้ส่งแบบสำรวจแล้ว" });
+        }
+      }
+
+      sheet.appendRow([
+        new Date(),
+        name,
+        studentClass,
+        number,
+        like,
+        dislike,
+        reason
+      ]);
+
+    } finally {
+      lock.releaseLock();
+    }
+
+    return json({ success: true });
+
+  } catch (error) {
+    return json({ success: false, message: error.message });
+  }
 }
 
-header {
-  background: linear-gradient(135deg,#2563eb,#7c3aed);
-  color: white;
-  text-align: center;
-  padding: 40px 15px;
+function json(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-header h1 {
-  margin: 0 0 10px;
-  font-size: 27px;
+// แสดงหน้า Admin
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile("Admin")
+    .setTitle("Admin Dashboard - M.2/1");
 }
 
-header p {
-  margin: 0;
-  opacity: .9;
-}
+// ตรวจรหัสผ่านและส่งเฉพาะข้อมูลสรุป
+function getDashboard(password) {
+  if (password !== ADMIN_PASSWORD) {
+    throw new Error("รหัสผ่านไม่ถูกต้อง");
+  }
 
-.container {
-  max-width: 600px;
-  margin: 25px auto;
-  padding: 15px;
-}
+  const sheet = getSheet();
+  const rows = sheet.getLastRow() < 2
+    ? []
+    : sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
 
-.card {
-  background: white;
-  padding: 25px;
-  border-radius: 18px;
-  box-shadow: 0 5px 20px #0000000d;
-  margin-bottom: 20px;
-}
+  const subjects = [
+    "คณิตศาสตร์", "วิทยาศาสตร์", "ภาษาไทย",
+    "ภาษาอังกฤษ", "สังคมศึกษา", "ประวัติศาสตร์",
+    "พลศึกษา", "ศิลปะ", "คอมพิวเตอร์",
+    "การงานอาชีพ"
+  ];
 
-h2 {
-  font-size: 20px;
-  margin-top: 0;
-}
+  const likes = {};
+  const dislikes = {};
 
-label {
-  display: block;
-  font-weight: bold;
-  margin: 18px 0 8px;
-}
-
-input, select, textarea {
-  width: 100%;
-  padding: 13px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  font-size: 16px;
-  background: white;
-}
-
-textarea {
-  resize: vertical;
-  min-height: 90px;
-}
-
-button {
-  width: 100%;
-  padding: 15px;
-  margin-top: 20px;
-  border: none;
-  border-radius: 12px;
-  background: #2563eb;
-  color: white;
-  font-size: 17px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #1d4ed8;
-}
-
-.result {
-  margin: 15px 0;
-}
-
-.bar {
-  height: 12px;
-  background: #e2e8f0;
-  border-radius: 20px;
-  overflow: hidden;
-  margin-top: 7px;
-}
-
-.fill {
-  height: 100%;
-  background: linear-gradient(90deg,#2563eb,#8b5cf6);
-  border-radius: 20px;
-  width: 0%;
-}
-
-footer {
-  text-align: center;
-  padding: 20px;
-  color: #64748b;
-  font-size: 13px;
-}
-</style>
-</head>
-
-<body>
-
-<header>
-  <h1>📚 Student Survey</h1>
-  <p>แบบสำรวจวิชาที่ชอบและไม่ชอบ</p>
-  <p>นักเรียนชั้นมัธยมศึกษาปีที่ 2/1</p>
-</header>
-
-<div class="container">
-
-  <div class="card">
-    <h2>📝 แบบสอบถามความคิดเห็น</h2>
-    <form id="survey">
-
-      <label>1. ชื่อเล่น</label>
-      <input id="name" placeholder="กรอกชื่อเล่น" required>
-
-      <label>2. วิชาที่ชอบมากที่สุด</label>
-      <select id="like" required>
-        <option value="">-- เลือกวิชา --</option>
-      </select>
-
-      <label>3. วิชาที่ไม่ชอบมากที่สุด</label>
-      <select id="dislike" required>
-        <option value="">-- เลือกวิชา --</option>
-      </select>
-
-      <label>4. เพราะอะไรถึงชอบหรือไม่ชอบ?</label>
-      <textarea id="reason" placeholder="แสดงความคิดเห็นของคุณ..."></textarea>
-
-      <button type="submit">ส่งแบบสำรวจ 🚀</button>
-    </form>
-    <p id="message"></p>
-  </div>
-
-  <div class="card">
-    <h2>📊 ผลสำรวจวิชาที่นักเรียนชอบ</h2>
-    <p>จำนวนผู้ตอบ: <b id="total">0</b> คน</p>
-    <div id="results"></div>
-  </div>
-
-</div>
-
-<footer>
-  แบบสำรวจความคิดเห็นนักเรียน ม.2/1
-  <br>Student Survey Project
-</footer>
-
-<script>
-const subjects = [
-  "คณิตศาสตร์",
-  "วิทยาศาสตร์",
-  "ภาษาไทย",
-  "ภาษาอังกฤษ",
-  "สังคมศึกษา",
-  "ประวัติศาสตร์",
-  "พลศึกษา",
-  "ศิลปะ",
-  "คอมพิวเตอร์",
-  "การงานอาชีพ"
-];
-
-const like = document.getElementById("like");
-const dislike = document.getElementById("dislike");
-
-subjects.forEach(subject => {
-  like.add(new Option(subject, subject));
-  dislike.add(new Option(subject, subject));
-});
-
-let surveys = JSON.parse(
-  localStorage.getItem("m21_surveys") || "[]"
-);
-
-document.getElementById("survey").addEventListener("submit", e => {
-  e.preventDefault();
-
-  const data = {
-    name: document.getElementById("name").value.trim(),
-    like: like.value,
-    dislike: dislike.value,
-    reason: document.getElementById("reason").value
-  };
-
-  if (!data.name || !data.like || !data.dislike) return;
-
-  surveys.push(data);
-
-  localStorage.setItem(
-    "m21_surveys",
-    JSON.stringify(surveys)
-  );
-
-  document.getElementById("message").textContent =
-    "✅ ส่งแบบสำรวจเรียบร้อยแล้ว!";
-
-  e.target.reset();
-  showResults();
-});
-
-function showResults() {
-  const total = surveys.length;
-
-  document.getElementById("total").textContent = total;
-
-  const results = document.getElementById("results");
-  results.innerHTML = "";
-
-  subjects.forEach(subject => {
-    const count = surveys.filter(
-      s => s.like === subject
-    ).length;
-
-    const percent = total
-      ? (count / total * 100).toFixed(1)
-      : 0;
-
-    results.innerHTML += `
-      <div class="result">
-        <b>${subject}</b>
-        <span style="float:right">${count} คน (${percent}%)</span>
-        <div class="bar">
-          <div class="fill" style="width:${percent}%"></div>
-        </div>
-      </div>
-    `;
+  subjects.forEach(s => {
+    likes[s] = 0;
+    dislikes[s] = 0;
   });
+
+  rows.forEach(row => {
+    if (likes[row[4]] !== undefined) likes[row[4]]++;
+    if (dislikes[row[5]] !== undefined) dislikes[row[5]]++;
+  });
+
+  const total = rows.length;
+
+  return {
+    total,
+    subjects: subjects.map(s => ({
+      name: s,
+      like: likes[s],
+      dislike: dislikes[s],
+      likePercent: total ? +(likes[s] / total * 100).toFixed(1) : 0,
+      dislikePercent: total ? +(dislikes[s] / total * 100).toFixed(1) : 0
+    }))
+  };
 }
-
-showResults();
-</script>
-
-</body>
-</html>
+    
