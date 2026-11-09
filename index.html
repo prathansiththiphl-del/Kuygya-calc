@@ -2,294 +2,185 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>แบบสำรวจความคิดเห็น ม.2/1</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      padding: 20px;
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      color: #f8fafc;
-      background: linear-gradient(135deg, #0f172a, #172554);
-    }
-
-    .container {
-      max-width: 600px;
-      margin: 35px auto;
-    }
-
-    .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 18px;
-      padding: 25px;
-      box-shadow: 0 15px 40px rgba(0,0,0,.3);
-    }
-
-    h1 {
-      color: #38bdf8;
-      text-align: center;
-      font-size: 26px;
-    }
-
-    .subtitle {
-      color: #cbd5e1;
-      text-align: center;
-      line-height: 1.6;
-      margin-bottom: 25px;
-    }
-
-    label {
-      display: block;
-      margin: 18px 0 8px;
-      font-weight: bold;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      padding: 13px;
-      border: 1px solid #475569;
-      border-radius: 9px;
-      background: #0f172a;
-      color: white;
-      font-size: 16px;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      outline: 2px solid #38bdf8;
-    }
-
-    input[readonly] {
-      color: #94a3b8;
-    }
-
-    textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-
-    button {
-      width: 100%;
-      padding: 15px;
-      margin-top: 25px;
-      border: none;
-      border-radius: 10px;
-      background: #2563eb;
-      color: white;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #1d4ed8;
-    }
-
-    button:disabled {
-      opacity: .6;
-    }
-
-    .admin {
-      display: block;
-      margin-top: 22px;
-      text-align: center;
-      color: #7dd3fc;
-      text-decoration: none;
-    }
-
-    #message {
-      text-align: center;
-      font-weight: bold;
-      margin-top: 18px;
-    }
-
-    .success { color: #4ade80; }
-    .error { color: #f87171; }
-
-    .note {
-      color: #94a3b8;
-      font-size: 13px;
-      line-height: 1.6;
-      margin-top: 20px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบสำรวจนักเรียน</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f3f5fb;
+  color:#202b45;
+}
+header{
+  background:#263d80;
+  color:white;
+  padding:25px 18px;
+  text-align:center;
+}
+header h2{margin:0 0 8px}
+.container{
+  max-width:520px;
+  margin:30px auto;
+  padding:0 15px;
+}
+.card{
+  background:white;
+  padding:24px;
+  border-radius:16px;
+  box-shadow:0 5px 25px #0001;
+}
+h3{margin-top:0}
+label{
+  display:block;
+  margin-top:16px;
+  font-weight:bold;
+}
+input,select{
+  width:100%;
+  padding:13px;
+  margin-top:7px;
+  border:1px solid #ccd2df;
+  border-radius:9px;
+  font-size:16px;
+}
+button{
+  width:100%;
+  padding:14px;
+  margin-top:22px;
+  background:#3155bd;
+  color:white;
+  border:0;
+  border-radius:9px;
+  font-size:17px;
+  font-weight:bold;
+}
+button:active{opacity:.8}
+.admin{
+  text-align:center;
+  margin:25px;
+  color:#65718b;
+}
+.admin button{
+  width:auto;
+  padding:10px 20px;
+  background:#64748b;
+}
+#message{
+  margin-top:15px;
+  text-align:center;
+}
+</style>
 </head>
-
 <body>
 
-  <div class="container">
-    <div class="card">
+<header>
+  <h2>ระบบสำรวจนักเรียน</h2>
+  <div>แบบสำรวจความคิดเห็นนักเรียน</div>
+</header>
 
-      <h1>📚 แบบสำรวจความคิดเห็น</h1>
+<div class="container">
+  <div class="card">
+    <h3>กรอกข้อมูลนักเรียน</h3>
 
-      <p class="subtitle">
-        วิชาที่ชอบและไม่ชอบของนักเรียน<br>
-        ชั้นมัธยมศึกษาปีที่ 2/1
-      </p>
+    <form id="surveyForm">
 
-      <form id="surveyForm" method="POST" target="submitFrame">
+      <label>ชื่อจริง</label>
+      <input name="name" required placeholder="กรอกชื่อจริง">
 
-        <label>ชื่อ - นามสกุล</label>
-        <input
-          type="text"
-          name="name"
-          placeholder="กรอกชื่อและนามสกุล"
-          required
-        >
+      <label>ชั้นเรียน</label>
+      <select name="classroom" required>
+        <option value="">เลือกชั้นเรียน</option>
+        <option>ม.1</option>
+        <option>ม.2</option>
+        <option>ม.3</option>
+        <option>ม.4</option>
+        <option>ม.5</option>
+        <option>ม.6</option>
+      </select>
 
-        <label>ชั้นเรียน</label>
-        <input
-          type="text"
-          name="studentClass"
-          value="ม.2/1"
-          readonly
-        >
+      <label>เลขที่</label>
+      <input name="number" type="number" min="1" required placeholder="กรอกเลขที่">
 
-        <label>เลขที่</label>
-        <input
-          type="number"
-          name="number"
-          min="1"
-          max="60"
-          placeholder="กรอกเลขที่"
-          required
-        >
+      <label>วิชาที่ชอบ</label>
+      <input name="favorite" required placeholder="ระบุวิชาที่ชอบ">
 
-        <label>วิชาที่ชอบ</label>
-        <select name="favorite" required>
-          <option value="">-- เลือกวิชา --</option>
-          <option>คณิตศาสตร์</option>
-          <option>วิทยาศาสตร์</option>
-          <option>ภาษาไทย</option>
-          <option>ภาษาอังกฤษ</option>
-          <option>สังคมศึกษา</option>
-          <option>ประวัติศาสตร์</option>
-          <option>สุขศึกษา</option>
-          <option>พลศึกษา</option>
-          <option>ศิลปะ</option>
-          <option>การงานอาชีพ</option>
-          <option>คอมพิวเตอร์</option>
-        </select>
+      <label>วิชาที่ไม่ชอบ</label>
+      <input name="unfavorite" required placeholder="ระบุวิชาที่ไม่ชอบ">
 
-        <label>วิชาที่ไม่ชอบ</label>
-        <select name="leastFavorite" required>
-          <option value="">-- เลือกวิชา --</option>
-          <option>คณิตศาสตร์</option>
-          <option>วิทยาศาสตร์</option>
-          <option>ภาษาไทย</option>
-          <option>ภาษาอังกฤษ</option>
-          <option>สังคมศึกษา</option>
-          <option>ประวัติศาสตร์</option>
-          <option>สุขศึกษา</option>
-          <option>พลศึกษา</option>
-          <option>ศิลปะ</option>
-          <option>การงานอาชีพ</option>
-          <option>คอมพิวเตอร์</option>
-        </select>
+      <label>เหตุผล</label>
+      <input name="reason" required placeholder="ระบุเหตุผล">
 
-        <label>เหตุผลเพิ่มเติม (ไม่บังคับ)</label>
-        <textarea
-          name="reason"
-          placeholder="ทำไมถึงชอบหรือไม่ชอบวิชานี้?"
-        ></textarea>
+      <button type="submit" id="submitBtn">ส่งแบบสำรวจ</button>
+    </form>
 
-        <button id="submitButton" type="submit">
-          ส่งแบบสำรวจ
-        </button>
-
-      </form>
-
-      <p id="message"></p>
-
-      <p class="note">
-        ข้อมูลนี้ใช้สำหรับการสำรวจความคิดเห็นในชั้นเรียนเท่านั้น
-      </p>
-
-      <a class="admin" id="adminLink" href="#">
-        🔐 เข้าสู่ระบบผู้ดูแล
-      </a>
-
-    </div>
+    <div id="message"></div>
   </div>
+</div>
 
-  <iframe
-    name="submitFrame"
-    id="submitFrame"
-    style="display:none">
-  </iframe>
+<div class="admin">
+  <button onclick="adminLogin()">เข้าสู่ระบบแอดมิน</button>
+</div>
 
-  <script>
-    // ใส่ URL Google Apps Script หลังจาก Deploy
-    const API_URL = "ใส่_URL_GOOGLE_APPS_SCRIPT";
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbyAFauHeznqEulb0xlsWHOsmbPA8NGSPpuGOQenoZNyP5jyQiD--CNXh5gIynioL2AX/exec";
 
-    const form = document.getElementById("surveyForm");
-    const button = document.getElementById("submitButton");
-    const message = document.getElementById("message");
+const form = document.getElementById("surveyForm");
+const message = document.getElementById("message");
 
-    form.action = API_URL;
+form.addEventListener("submit", function(e){
+  e.preventDefault();
 
-    document.getElementById("adminLink").href =
-      API_URL + "?page=admin";
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "กำลังส่งข้อมูล...";
 
-    let waiting = false;
+  const data = new FormData(form);
+  data.append("action", "submit");
 
-    form.addEventListener("submit", function(event) {
-      event.preventDefault();
+  const frame = document.createElement("iframe");
+  frame.name = "submitFrame";
+  frame.style.display = "none";
+  document.body.appendChild(frame);
 
-      if (waiting || !form.reportValidity()) return;
+  const sendForm = document.createElement("form");
+  sendForm.method = "POST";
+  sendForm.action = API_URL;
+  sendForm.target = "submitFrame";
 
-      if (form.elements.favorite.value ===
-          form.elements.leastFavorite.value) {
-        message.textContent =
-          "กรุณาเลือกวิชาที่ชอบและไม่ชอบให้ต่างกัน";
-        message.className = "error";
-        return;
-      }
+  for (const [key,value] of data.entries()){
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = key;
+    input.value = value;
+    sendForm.appendChild(input);
+  }
 
-      if (!API_URL.startsWith("https://script.google.com/")) {
-        message.textContent =
-          "กรุณาตั้งค่า URL Google Apps Script ก่อน";
-        message.className = "error";
-        return;
-      }
+  document.body.appendChild(sendForm);
 
-      waiting = true;
-      button.disabled = true;
-      button.textContent = "กำลังส่งข้อมูล...";
-      message.textContent = "";
+  window.addEventListener("message", function handler(event){
+    if(event.data && event.data.type === "survey_submit"){
+      window.removeEventListener("message", handler);
+      message.textContent = event.data.ok
+        ? "ส่งแบบสำรวจสำเร็จแล้ว!"
+        : "ส่งไม่สำเร็จ กรุณาลองใหม่";
+      message.style.color = event.data.ok ? "green" : "red";
+      if(event.data.ok) form.reset();
+      btn.disabled = false;
+      btn.textContent = "ส่งแบบสำรวจ";
+      sendForm.remove();
+      frame.remove();
+    }
+  });
 
-      form.submit();
-    });
+  sendForm.submit();
+});
 
-    window.addEventListener("message", function(event) {
-      if (
-        event.source !==
-        document.getElementById("submitFrame").contentWindow
-      ) return;
-
-      if (!event.data ||
-          event.data.type !== "survey-result") return;
-
-      waiting = false;
-      button.disabled = false;
-      button.textContent = "ส่งแบบสำรวจ";
-
-      message.textContent = event.data.message;
-      message.className =
-        event.data.ok ? "success" : "error";
-
-      if (event.data.ok) {
-        form.reset();
-      }
-    });
-  </script>
+function adminLogin(){
+  alert("ระบบแอดมินกำลังเตรียมเชื่อมต่อ");
+}
+</script>
 
 </body>
 </html>
